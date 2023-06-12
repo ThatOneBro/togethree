@@ -16,6 +16,7 @@
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "three": "^0.153.0",
+    "valtio": "^1.10.5",
     "zustand": "^4.3.8"
   },
   "devDependencies": {

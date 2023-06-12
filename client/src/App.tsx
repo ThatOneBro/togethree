@@ -1,4 +1,4 @@
-import { useState, Suspense } from "react";
+import { useState, Suspense, useRef } from "react";
 import { Canvas } from "@react-three/fiber";
 import {
   // Stats,
@@ -13,12 +13,17 @@ import {
   // OrbitControls,
 } from "@react-three/drei";
 
+import type { Group } from "three";
+
 import { SkyBox } from "./game/SkyBox";
 import { InputsHandler } from "./game/InputsHandler";
+import { Player } from "./game/Player";
 
 import "./App.css";
 
 function App() {
+  const [localPlayer] = useState({ username: "Cool" });
+  const localPlayerRef = useRef<Group>(null!);
   return (
     <>
       <Canvas
@@ -49,14 +54,14 @@ function App() {
           </group>
         </Suspense> */}
         <InputsHandler>
-          {/* {localPlayer && (
+          {localPlayer && (
             <Player
-              id={localPlayer.id}
+              // id={localPlayer.id}
               local
               playerData={localPlayer}
               ref={localPlayerRef}
             />
-          )} */}
+          )}
           {/* <Boombox
             setRadioOnState={setRadioOnState}
             radioState={radioState}
