@@ -2,27 +2,28 @@ import { useState, Suspense, useRef } from "react";
 import { Canvas } from "@react-three/fiber";
 import {
   // Stats,
-  // Text,
+  Text,
   AdaptiveDpr,
   AdaptiveEvents,
   // Sky,
-  PositionalAudio,
-  Environment,
+  // PositionalAudio,
+  // Environment,
   Preload,
-  Sky,
   // OrbitControls,
 } from "@react-three/drei";
 
 import type { Group } from "three";
 
-import { SkyBox } from "./game/SkyBox";
 import { InputsHandler } from "./game/InputsHandler";
+import { SkyBox } from "./game/SkyBox";
+import { Lights } from "./game/Lights";
 import { Player } from "./game/Player";
 
 import "./App.css";
 
 function App() {
   const [localPlayer] = useState({ username: "Cool" });
+  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
   const localPlayerRef = useRef<Group>(null!);
   return (
     <>
@@ -39,35 +40,26 @@ function App() {
       >
         <AdaptiveDpr pixelated />
         <AdaptiveEvents />
-        {/* <Stats className="stats-panel" parent={statsParentRef} /> */}
-        <Suspense fallback={null}>
+        <Suspense fallback={<Text>Testing</Text>}>
+          {/* <Stats className="stats-panel" parent={statsParentRef} /> */}
           <SkyBox />
-        </Suspense>
-        {/* <Suspense fallback={null}>
-          <group position={[0, 0, 0]}>
-            <mesh position={[-52, 0, 52]}>
-              <PositionalAudio url={OceanSound} distance={8} />
-            </mesh>
-            <mesh position={[52, 0, -52]}>
-              <PositionalAudio url={OceanSound2} distance={8} />
-            </mesh>
-          </group>
-        </Suspense> */}
-        <InputsHandler>
-          {localPlayer && (
-            <Player
-              // id={localPlayer.id}
-              local
-              playerData={localPlayer}
-              ref={localPlayerRef}
-            />
-          )}
-          {/* <Boombox
+          <Lights />
+          <InputsHandler>
+            {localPlayer && (
+              <Player
+                // id={localPlayer.id}
+                local
+                playerData={localPlayer}
+                ref={localPlayerRef}
+              />
+            )}
+            {/* <Boombox
             setRadioOnState={setRadioOnState}
             radioState={radioState}
             fetchRadioOnState={fetchRadioOnState}
           /> */}
-        </InputsHandler>
+          </InputsHandler>
+        </Suspense>
         <Preload all />
       </Canvas>
     </>
