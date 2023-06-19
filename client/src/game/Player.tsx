@@ -1,6 +1,6 @@
-import { Suspense, useState, useRef, forwardRef } from "react";
+import { useState, useRef, forwardRef } from "react";
 import { Html } from "@react-three/drei";
-import { useSnapshot, proxy } from "valtio";
+import { proxy } from "valtio";
 import { Vector3 } from "three";
 
 import type { ForwardedRef, MutableRefObject } from "react";
@@ -57,7 +57,7 @@ export const Player = forwardRef(
     ref: ForwardedRef<Group> | null,
   ) => {
     const localStateProxy = useLocalState();
-    const localState = useSnapshot(localStateProxy);
+    // const localState = useSnapshot(localStateProxy);
 
     const localRef = useRef<Group>(null!);
     const usedRef = (ref as MutableRefObject<Group>) || localRef;
@@ -162,15 +162,13 @@ export const Player = forwardRef(
             </group>
           )} */}
           <group ref={usedInnerRef}>
-            <Suspense fallback={null}>
-              <Robot
-                color="blue"
-                moving={localStateProxy.moving}
-                jumping={localStateProxy.jumping}
-                // scale={[playerWide ? 0.6 : 0.3, 0.3, 0.3]}
-                // hat={playerHat}
-              />
-            </Suspense>
+            <Robot
+              color="blue"
+              moving={localStateProxy.moving}
+              jumping={localStateProxy.jumping}
+              // scale={[playerWide ? 0.6 : 0.3, 0.3, 0.3]}
+              // hat={playerHat}
+            />
           </group>
         </group>
       </>

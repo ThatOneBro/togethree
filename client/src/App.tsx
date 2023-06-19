@@ -1,30 +1,59 @@
-import { useState, Suspense, useRef } from "react";
+import { useState, Suspense, useRef, useMemo, MutableRefObject } from "react";
 import { Canvas } from "@react-three/fiber";
 import {
   // Stats,
   Text,
   AdaptiveDpr,
   AdaptiveEvents,
-  // Sky,
-  // PositionalAudio,
-  // Environment,
   Preload,
-  // OrbitControls,
 } from "@react-three/drei";
 
-import type { Group } from "three";
+import type { Group, Object3D } from "three";
 
+import { CameraProvider } from "./game/camera/components/CameraProvider";
 import { InputsHandler } from "./game/InputsHandler";
+import {
+  useSetCameraAngle,
+  useSetCameraFollowTarget,
+} from "./game/camera/hooks/camera-hooks";
 import { SkyBox } from "./game/SkyBox";
 import { Lights } from "./game/Lights";
 import { Player } from "./game/Player";
 
+import type { CameraAngle } from "./game/camera/config";
+
 import "./App.css";
+
+type CameraTarget = "player" | "ship" | "tower";
+const cameraAngleConfig: Record<CameraTarget, CameraAngle> = {
+  player: "high",
+  ship: "ship",
+  tower: "lowWide",
+} as const;
 
 function App() {
   const [localPlayer] = useState({ username: "Cool" });
   // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
   const localPlayerRef = useRef<Group>(null!);
+  const [currentTarget, setCurrentTarget] = useState<CameraTarget>("player");
+
+  const cameraTargets = useMemo<
+    Record<CameraTarget, MutableRefObject<Object3D | null> | null>
+  >(
+    () => ({
+      player: localPlayerRef,
+      ship: null,
+      tower: null,
+    }),
+    [localPlayerRef],
+  );
+
+  useSetCameraAngle(
+    cameraAngleConfig[currentTarget as CameraTarget] || "head-on",
+  );
+
+  useSetCameraFollowTarget(cameraTargets[currentTarget] || null);
+
   return (
     <>
       <Canvas
@@ -44,21 +73,23 @@ function App() {
           {/* <Stats className="stats-panel" parent={statsParentRef} /> */}
           <SkyBox />
           <Lights />
-          <InputsHandler>
-            {localPlayer && (
-              <Player
-                // id={localPlayer.id}
-                local
-                playerData={localPlayer}
-                ref={localPlayerRef}
-              />
-            )}
-            {/* <Boombox
-            setRadioOnState={setRadioOnState}
-            radioState={radioState}
-            fetchRadioOnState={fetchRadioOnState}
-          /> */}
-          </InputsHandler>
+          <CameraProvider>
+            <InputsHandler>
+              {localPlayer && (
+                <Player
+                  // id={localPlayer.id}
+                  local
+                  playerData={localPlayer}
+                  ref={localPlayerRef}
+                />
+              )}
+              {/* <Boombox
+                setRadioOnState={setRadioOnState}
+                radioState={radioState}
+                fetchRadioOnState={fetchRadioOnState}
+              /> */}
+            </InputsHandler>
+          </CameraProvider>
         </Suspense>
         <Preload all />
       </Canvas>
