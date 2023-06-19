@@ -7,9 +7,9 @@ import type { ForwardedRef, MutableRefObject } from "react";
 import type { Group } from "three";
 
 import { Robot } from "./models/Robot/Robot";
-import { useController } from "./hooks/useController";
+import { useController } from "./hooks/use-controller";
 
-import type { ControllerState } from "./hooks/useController";
+import type { ControllerState } from "./hooks/use-controller";
 
 const LocalController = ({
   // id,
