@@ -8,7 +8,7 @@ import { CameraContext } from "~/game/camera/context";
 import type { CameraAngle } from "~/game/camera/config";
 
 export const useSetCameraFollowTarget = (
-  target: MutableRefObject<Object3D | null>,
+  target: MutableRefObject<Object3D | null> | null,
 ) => {
   const { setCameraFollowTarget } = useContext(CameraContext);
   useEffect(() => {

@@ -9,7 +9,7 @@ import type {
 } from "three";
 import type { MutableRefObject } from "react";
 
-import { useFollow } from "~/game/camera/hooks/useFollow";
+import { useFollow } from "~/game/camera/hooks/use-follow";
 import type { CameraAngle } from "../config";
 
 // const portraitConfig = {
