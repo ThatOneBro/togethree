@@ -1,4 +1,4 @@
-import { useCallback, useState } from "react";
+import { useCallback, useState, useEffect } from "react";
 
 import type { MutableRefObject } from "react";
 import type { Object3D } from "three";
@@ -39,13 +39,21 @@ export const CameraProvider = ({ children }: { children: JSX.Element }) => {
     [setAngle],
   );
 
+  const [context, setContext] = useState({
+    setCameraFollowTarget,
+    setCameraAngle,
+  });
+
+  useEffect(() => {
+    console.log(context);
+  }, [context]);
+
+  useEffect(() => {
+    setContext(s => ({ ...s, setCameraAngle, setCameraFollowTarget }));
+  }, [setContext, setCameraAngle, setCameraFollowTarget]);
+
   return (
-    <CameraContext.Provider
-      value={{
-        setCameraFollowTarget,
-        setCameraAngle,
-      }}
-    >
+    <CameraContext.Provider value={context}>
       <Camera followTarget={followTarget} angle={cameraAngle} />
       {children}
     </CameraContext.Provider>

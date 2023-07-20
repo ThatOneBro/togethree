@@ -22,6 +22,7 @@ export const useSetCameraFollowTarget = (
 
 export const useSetCameraAngle = (angle: CameraAngle) => {
   const { setCameraAngle } = useContext(CameraContext);
+  console.log(setCameraAngle);
   useEffect(() => {
     const unsubscribe = setCameraAngle(angle);
 

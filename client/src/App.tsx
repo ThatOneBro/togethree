@@ -35,7 +35,9 @@ function App() {
   const [localPlayer] = useState({ username: "Cool" });
   // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
   const localPlayerRef = useRef<Group>(null!);
-  const [currentTarget, setCurrentTarget] = useState<CameraTarget>("player");
+  const [currentTarget, setCurrentTarget] = useState<CameraTarget | null>(
+    "player",
+  );
 
   const cameraTargets = useMemo<
     Record<CameraTarget, MutableRefObject<Object3D | null> | null>
@@ -52,7 +54,9 @@ function App() {
     cameraAngleConfig[currentTarget as CameraTarget] || "head-on",
   );
 
-  useSetCameraFollowTarget(cameraTargets[currentTarget] || null);
+  useSetCameraFollowTarget(
+    cameraTargets[currentTarget as CameraTarget] || null,
+  );
 
   return (
     <>

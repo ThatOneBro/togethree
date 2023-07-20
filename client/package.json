@@ -10,14 +10,16 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@react-three/drei": "^9.74.8",
-    "@react-three/fiber": "^8.13.1",
+    "@react-three/drei": "^9.74.6",
+    "@react-three/fiber": "^8.13.0",
     "@togethree/util": "workspace:*",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "three": "^0.153.0",
     "valtio": "^1.10.5",
-    "zustand": "^4.3.8"
+    "zustand": "^4.3.8",
+    "@types/react": "^18.2.8",
+    "@types/three": "^0.152.1"
   },
   "devDependencies": {
     "@react-hook/window-size": "^3.1.1",

@@ -22,131 +22,57 @@
  * SOFTWARE.
  */
 
-import * as common from "./util";
+const EPSILON = 1e-9;
 
-const _DEBUG =
-  typeof globalThis.DEBUG === "undefined" ? false : globalThis.DEBUG;
-const _ASSERT =
-  typeof globalThis.ASSERT === "undefined" ? false : globalThis.ASSERT;
+function debug(..._args: any[]): void {
+  if (!_DEBUG) return;
+  // @ts-ignore
+  console.log.apply(console, arguments);
+}
 
-// TODO: See if making this into a class actually improves perf
-const math: Math & {
-  readonly EPSILON: number;
-  /**
-   * This function is used to ensure that a floating point number is not a NaN or
-   * infinity.
-   */
-  isFinite(x: any): boolean;
-  assert(x: any): void;
-  /**
-   * This is a approximate yet fast inverse square-root (todo).
-   */
-  invSqrt(x: number): number;
-  /**
-   * Next Largest Power of 2 Given a binary integer value x, the next largest
-   * power of 2 can be computed by a SWAR algorithm that recursively "folds" the
-   * upper bits into the lower bits. This process yields a bit vector with the
-   * same most significant 1 as x, but all 1's below it. Adding 1 to that value
-   * yields the next largest power of 2. For a 32-bit value:
-   */
-  nextPowerOfTwo(x: number): number;
-  isPowerOfTwo(x: number): boolean;
-  mod(num: number, min?: number, max?: number): number;
-  /**
-   * Returns a min if num is less than min, and max if more than max, otherwise returns num.
-   */
-  clamp(num: number, min: number, max: number): number;
-  /**
-   * Returns a random number between min and max when two arguments are provided.
-   * If one arg is provided between 0 to max.
-   * If one arg is passed between 0 to 1.
-   */
-  random(min?: number, max?: number): number;
-} = Object.create(Math);
-
-// @ts-ignore
-// noinspection JSConstantReassignment
-math.EPSILON = 1e-9; // TODO
-
-math.isFinite = function (x: unknown): boolean {
+function _isFinite(x: unknown): boolean {
   return typeof x === "number" && isFinite(x) && !isNaN(x);
-};
+}
 
-math.assert = function (x: number): void {
+function mathAssert(x: any): void {
   if (!_ASSERT) return;
-  if (!math.isFinite(x)) {
-    _DEBUG && common.debug(x);
+  if (!_isFinite(x)) {
+    _DEBUG && debug(x);
     throw new Error("Invalid Number!");
   }
-};
+}
 
-math.invSqrt = function (x: number): number {
-  // TODO:
-  return 1 / Math.sqrt(x);
-};
+function assert(
+  statement: boolean,
+  err?: string,
+  log?: any,
+): asserts statement {
+  if (!_ASSERT) return;
+  if (statement) return;
+  log && console.log(log);
+  throw new Error(err || "Assertion failed!");
+}
 
-math.nextPowerOfTwo = function (x: number): number {
-  // TODO
-  x |= x >> 1;
-  x |= x >> 2;
-  x |= x >> 4;
-  x |= x >> 8;
-  x |= x >> 16;
-  return x + 1;
-};
+// TODO read DEBUG and ASSERT from config
+const DEBUG = true;
+const ASSERT = true;
 
-math.isPowerOfTwo = function (x: number): boolean {
-  return x > 0 && (x & (x - 1)) === 0;
-};
-
-math.mod = function (num: number, min?: number, max?: number): number {
-  if (typeof min === "undefined") {
-    max = 1;
-    min = 0;
-  } else if (typeof max === "undefined") {
-    max = min;
-    min = 0;
-  }
-  if (max > min) {
-    num = (num - min) % (max - min);
-    return num + (num < 0 ? max : min);
-  } else {
-    num = (num - max) % (min - max);
-    return num + (num <= 0 ? min : max);
-  }
-};
-
-math.clamp = function (num: number, min: number, max: number): number {
-  if (num < min) {
-    return min;
-  } else if (num > max) {
-    return max;
-  } else {
-    return num;
-  }
-};
-
-math.random = function (min?: number, max?: number): number {
-  if (typeof min === "undefined") {
-    max = 1;
-    min = 0;
-  } else if (typeof max === "undefined") {
-    max = min;
-    min = 0;
-  }
-  return min === max ? min : Math.random() * (max - min) + min;
-};
+const _DEBUG = typeof DEBUG === "undefined" ? false : DEBUG;
+const _ASSERT = typeof ASSERT === "undefined" ? false : ASSERT;
 
 export class Vec2 {
-  x: number = 0;
-  y: number = 0;
+  // @ts-ignore
+  x: number;
+  // @ts-ignore
+  y: number;
 
   constructor(x: number, y: number);
   constructor(obj: { x: number; y: number });
   constructor();
   // tslint:disable-next-line:typedef
-  constructor(x?: any, y?: any) {
+  constructor(x?: number | { x: number; y: number }, y?: number) {
     if (!(this instanceof Vec2)) {
+      // @ts-ignore
       return new Vec2(x, y);
     }
     if (typeof x === "undefined") {
@@ -156,6 +82,7 @@ export class Vec2 {
       this.x = x.x;
       this.y = x.y;
     } else {
+      assert(y !== undefined);
       this.x = x;
       this.y = y;
     }
@@ -206,17 +133,17 @@ export class Vec2 {
   /**
    * Does this vector contain finite coordinates?
    */
-  static isValid(obj: { x: number; y: number }): boolean {
+  static isValid(obj: any): boolean {
     if (obj === null || typeof obj === "undefined") {
       return false;
     }
-    return math.isFinite(obj.x) && math.isFinite(obj.y);
+    return _isFinite(obj.x) && _isFinite(obj.y);
   }
 
   static assert(o: any): void {
     if (!_ASSERT) return;
     if (!Vec2.isValid(o)) {
-      _DEBUG && common.debug(o);
+      _DEBUG && debug(o);
       throw new Error("Invalid Vec2!");
     }
   }
@@ -244,14 +171,15 @@ export class Vec2 {
    * @returns this
    */
   // tslint:disable-next-line:typedef
-  set(x: any, y?: any) {
+  set(x: number | { x: number; y: number }, y?: number) {
     if (typeof x === "object") {
       _ASSERT && Vec2.assert(x);
       this.x = x.x;
       this.y = x.y;
     } else {
-      _ASSERT && math.assert(x);
-      _ASSERT && math.assert(y);
+      _ASSERT && mathAssert(x);
+      _ASSERT && mathAssert(y);
+      assert(!!y);
       this.x = x;
       this.y = y;
     }
@@ -264,8 +192,8 @@ export class Vec2 {
    * @returns this
    */
   setNum(x: number, y: number) {
-    _ASSERT && math.assert(x);
-    _ASSERT && math.assert(y);
+    _ASSERT && mathAssert(x);
+    _ASSERT && mathAssert(y);
     this.x = x;
     this.y = y;
 
@@ -289,9 +217,9 @@ export class Vec2 {
    * Set linear combination of v and w: `a * v + b * w`
    */
   setCombine(a: number, v: Vec2, b: number, w: Vec2): Vec2 {
-    _ASSERT && math.assert(a);
+    _ASSERT && mathAssert(a);
     _ASSERT && Vec2.assert(v);
-    _ASSERT && math.assert(b);
+    _ASSERT && mathAssert(b);
     _ASSERT && Vec2.assert(w);
     const x = a * v.x + b * w.x;
     const y = a * v.y + b * w.y;
@@ -303,7 +231,7 @@ export class Vec2 {
   }
 
   setMul(a: number, v: Vec2): Vec2 {
-    _ASSERT && math.assert(a);
+    _ASSERT && mathAssert(a);
     _ASSERT && Vec2.assert(v);
     const x = a * v.x;
     const y = a * v.y;
@@ -329,9 +257,9 @@ export class Vec2 {
    * Add linear combination of v and w: `a * v + b * w`
    */
   addCombine(a: number, v: Vec2, b: number, w: Vec2): Vec2 {
-    _ASSERT && math.assert(a);
+    _ASSERT && mathAssert(a);
     _ASSERT && Vec2.assert(v);
-    _ASSERT && math.assert(b);
+    _ASSERT && mathAssert(b);
     _ASSERT && Vec2.assert(w);
 
     const x = a * v.x + b * w.x;
@@ -344,7 +272,7 @@ export class Vec2 {
   }
 
   addMul(a: number, v: Vec2): Vec2 {
-    _ASSERT && math.assert(a);
+    _ASSERT && mathAssert(a);
     _ASSERT && Vec2.assert(v);
     const x = a * v.x;
     const y = a * v.y;
@@ -358,9 +286,9 @@ export class Vec2 {
    * Subtract linear combination of v and w: `a * v + b * w`
    */
   subCombine(a: number, v: Vec2, b: number, w: Vec2): Vec2 {
-    _ASSERT && math.assert(a);
+    _ASSERT && mathAssert(a);
     _ASSERT && Vec2.assert(v);
-    _ASSERT && math.assert(b);
+    _ASSERT && mathAssert(b);
     _ASSERT && Vec2.assert(w);
     const x = a * v.x + b * w.x;
     const y = a * v.y + b * w.y;
@@ -372,7 +300,7 @@ export class Vec2 {
   }
 
   subMul(a: number, v: Vec2): Vec2 {
-    _ASSERT && math.assert(a);
+    _ASSERT && mathAssert(a);
     _ASSERT && Vec2.assert(v);
     const x = a * v.x;
     const y = a * v.y;
@@ -400,7 +328,7 @@ export class Vec2 {
    * @returns this
    */
   mul(m: number): Vec2 {
-    _ASSERT && math.assert(m);
+    _ASSERT && mathAssert(m);
     this.x *= m;
     this.y *= m;
     return this;
@@ -429,7 +357,7 @@ export class Vec2 {
    */
   normalize(): number {
     const length = this.length();
-    if (length < math.EPSILON) {
+    if (length < EPSILON) {
       return 0.0;
     }
     const invLength = 1.0 / length;
@@ -508,13 +436,14 @@ export class Vec2 {
    * vector.
    */
   // tslint:disable-next-line:typedef
-  static cross(v: any, w: any) {
+  static cross(v: Vec2 | number, w: Vec2 | number) {
     if (typeof w === "number") {
       _ASSERT && Vec2.assert(v);
-      _ASSERT && math.assert(w);
+      _ASSERT && mathAssert(w);
+      assert(v instanceof Vec2);
       return Vec2.neo(w * v.y, -w * v.x);
     } else if (typeof v === "number") {
-      _ASSERT && math.assert(v);
+      _ASSERT && mathAssert(v);
       _ASSERT && Vec2.assert(w);
       return Vec2.neo(-v * w.y, v * w.x);
     } else {
@@ -539,7 +468,7 @@ export class Vec2 {
    */
   static crossVec2Num(v: Vec2, w: number): Vec2 {
     _ASSERT && Vec2.assert(v);
-    _ASSERT && math.assert(w);
+    _ASSERT && mathAssert(w);
     return Vec2.neo(w * v.y, -w * v.x);
   }
 
@@ -548,7 +477,7 @@ export class Vec2 {
    * vector.
    */
   static crossNumVec2(v: number, w: Vec2): Vec2 {
-    _ASSERT && math.assert(v);
+    _ASSERT && mathAssert(v);
     _ASSERT && Vec2.assert(w);
     return Vec2.neo(-v * w.y, v * w.x);
   }
@@ -558,19 +487,19 @@ export class Vec2 {
   /**
    * Returns `a + (v x w)`
    */
-  // tslint:disable-next-line:typedef
-  static addCross(a: any, v: any, w: any) {
+  static addCross(a: Vec2, v: Vec2 | number, w: Vec2 | number) {
     if (typeof w === "number") {
       _ASSERT && Vec2.assert(v);
-      _ASSERT && math.assert(w);
+      _ASSERT && mathAssert(w);
+      // @ts-ignore
       return Vec2.neo(w * v.y + a.x, -w * v.x + a.y);
     } else if (typeof v === "number") {
-      _ASSERT && math.assert(v);
+      _ASSERT && mathAssert(v);
       _ASSERT && Vec2.assert(w);
       return Vec2.neo(-v * w.y + a.x, v * w.x + a.y);
     }
 
-    _ASSERT && common.assert(false);
+    _ASSERT && assert(false);
   }
 
   /**
@@ -578,7 +507,7 @@ export class Vec2 {
    */
   static addCrossVec2Num(a: Vec2, v: Vec2, w: number): Vec2 {
     _ASSERT && Vec2.assert(v);
-    _ASSERT && math.assert(w);
+    _ASSERT && mathAssert(w);
     return Vec2.neo(w * v.y + a.x, -w * v.x + a.y);
   }
 
@@ -586,7 +515,7 @@ export class Vec2 {
    * Returns `a + (v x w)`
    */
   static addCrossNumVec2(a: Vec2, v: number, w: Vec2): Vec2 {
-    _ASSERT && math.assert(v);
+    _ASSERT && mathAssert(v);
     _ASSERT && Vec2.assert(w);
     return Vec2.neo(-v * w.y + a.x, v * w.x + a.y);
   }
@@ -595,15 +524,6 @@ export class Vec2 {
     _ASSERT && Vec2.assert(v);
     _ASSERT && Vec2.assert(w);
     return Vec2.neo(v.x + w.x, v.y + w.y);
-  }
-
-  /** @internal @deprecated */
-  static wAdd(a: number, v: Vec2, b: number, w: Vec2): Vec2 {
-    if (typeof b !== "undefined" || typeof w !== "undefined") {
-      return Vec2.combine(a, v, b, w);
-    } else {
-      return Vec2.mulNumVec2(a, v);
-    }
   }
 
   static combine(a: number, v: Vec2, b: number, w: Vec2): Vec2 {
@@ -619,13 +539,14 @@ export class Vec2 {
   static mul(a: Vec2, b: number): Vec2;
   static mul(a: number, b: Vec2): Vec2;
   // tslint:disable-next-line:typedef
-  static mul(a: any, b: any) {
+  static mul(a: Vec2 | number, b: Vec2 | number) {
     if (typeof a === "object") {
       _ASSERT && Vec2.assert(a);
-      _ASSERT && math.assert(b);
+      _ASSERT && mathAssert(b);
+      // @ts-ignore
       return Vec2.neo(a.x * b, a.y * b);
     } else if (typeof b === "object") {
-      _ASSERT && math.assert(a);
+      _ASSERT && mathAssert(a);
       _ASSERT && Vec2.assert(b);
       return Vec2.neo(a * b.x, a * b.y);
     }
@@ -633,12 +554,12 @@ export class Vec2 {
 
   static mulVec2Num(a: Vec2, b: number): Vec2 {
     _ASSERT && Vec2.assert(a);
-    _ASSERT && math.assert(b);
+    _ASSERT && mathAssert(b);
     return Vec2.neo(a.x * b, a.y * b);
   }
 
   static mulNumVec2(a: number, b: Vec2): Vec2 {
-    _ASSERT && math.assert(a);
+    _ASSERT && mathAssert(a);
     _ASSERT && Vec2.assert(b);
     return Vec2.neo(a * b.x, a * b.y);
   }
@@ -680,7 +601,7 @@ export class Vec2 {
   clamp(max: number): Vec2 {
     const lengthSqr = this.x * this.x + this.y * this.y;
     if (lengthSqr > max * max) {
-      const invLength = math.invSqrt(lengthSqr);
+      const invLength = 1 / Math.sqrt(lengthSqr);
       this.x *= invLength * max;
       this.y *= invLength * max;
     }
